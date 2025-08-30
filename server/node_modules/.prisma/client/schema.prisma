@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Source {
+  HACKER_NEWS
+  COINGECKO
+}
+
+model Trend {
+  id          Int      @id @default(autoincrement())
+  source      Source
+  externalId  String
+  title       String
+  url         String?
+  score       Float? // HN points or CG price/market_cap_change
+  collectedAt DateTime @default(now())
+  raw         Json // full API payload (stored as jsonb in Postgres)
+
+  @@unique([source, externalId]) // dedupe per upstream item
+  @@index([collectedAt])
+  @@index([score])
+}
+
+model Summary {
+  id        Int      @id @default(autoincrement())
+  content   String
+  // optional scope of the summary
+  window    String? // e.g., "last_60_min"
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
